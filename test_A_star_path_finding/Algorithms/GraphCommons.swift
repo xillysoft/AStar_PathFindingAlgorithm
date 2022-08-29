@@ -8,21 +8,23 @@
 import Foundation
 
 protocol IGraph {
-    associatedtype NodePointi: Hashable
+    associatedtype Node: Hashable
     associatedtype WeightType: Numeric&Comparable
 //    typealias WeightType = Float
     
-    func adjacentNodes(with node: NodePointi) -> Set<NodePointi>
-    func W(_ a: NodePointi, _ b: NodePointi) -> WeightType?
+    func adjacentNodes(with node: Node) -> Set<Node>
+    func W(_ a: Node, _ b: Node) -> WeightType?
 
     /**
      Heuristic distance from node a to target
      */
-    func H(_ a: NodePointi, _ target: NodePointi) -> WeightType
+    func H(_ a: Node, _ target: Node) -> WeightType?
 }
 
+/*
 extension IGraph {
-    func H(_ a: NodePointi, _ target: NodePointi) -> WeightType {
+    func H(_ a: Node, _ target: Node) -> WeightType? {
         return WeightType.zero
     }
 }
+ */

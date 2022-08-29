@@ -21,7 +21,7 @@ class ViewController: UIViewController {
     var _circle2: CAShapeLayer! = nil
     var _pathShape: CAShapeLayer!
     
-    let nWidthi: Int = 20
+    let nWidthi: Int = 40
     var nHeighti: Int! //update after .view did layout
     var graph: MyGraph! = nil
     
@@ -206,9 +206,11 @@ struct Pointi: Hashable, Equatable, CustomStringConvertible {
     }
 }
 
-struct MyGraph: IGraph {
+class MyGraph: IGraph {
+
     
-    typealias NodePointi = Pointi
+    
+    typealias Node = Pointi
     typealias WeightType = Int
     
     var dir8: Bool = true  //determines which nodes returned from adjacentNodes()
@@ -290,11 +292,11 @@ struct MyGraph: IGraph {
     }
     
     //<a, b> is adjacent if they are neighbor and they have same color
-    func adjacentNodes(with a: NodePointi) -> Set<NodePointi> {
+    func adjacentNodes(with a: Node) -> Set<Node> {
         let ix0 = a.x, iy0 = a.y
         guard ix0 < nWidthi && iy0 < nHeighti else { fatalError() }
         let pixel0 = imagePixelsi[iy0][ix0]
-        var adj: Set<NodePointi> = []
+        var adj: Set<Node> = []
         for (dx, dy) in self.dxdy {
             let ix1 = ix0 + dx, iy1 = iy0 + dy
             if ix1 < 0 || iy1 < 0 || ix1 >= nWidthi || iy1 >= nHeighti { continue }
@@ -307,12 +309,57 @@ struct MyGraph: IGraph {
         return adj
     }
     
-    func W(_ a: NodePointi, _ b: NodePointi) -> WeightType? {
+    func W(_ a: Node, _ b: Node) -> WeightType? {
+        if adjacentNodes(with: a).contains(b) {
+            return 1
+        }
         return (a - b).manhattan
     }
     
-    func H(_ a: Pointi, _ b: Pointi) -> WeightType {
+    var _databaseTarget: Node! = nil
+    var _distFromTarget: [Node: WeightType]! = nil
+    
+    //Heuristic function by Manhattan distance
+    func __H__(_ a: Pointi, _ b: Pointi) -> WeightType? {
+        if adjacentNodes(with: a).contains(b) {
+            return 1
+        }
         return (a - b).manhattan
+    }
+    
+    //Heuristic function pre-computed with "pattern database"
+    func H(_ a: Pointi, _ b: Pointi) -> WeightType? {
+        let target = b
+        if _databaseTarget == nil || _databaseTarget! != target {
+            print("Building pattern database with target=\(target)...")
+
+            _databaseTarget = target
+            _distFromTarget = _buildPatternDatabase(with: target)
+        }
+        return _distFromTarget[a]
+    }
+
+    func _buildPatternDatabase(with target: Node) -> [Node: WeightType]{
+        var Q: [Node] = [target]
+        var visited: Set<Node> = [target]
+        var dist: [Node: WeightType] = [target: 0] ////distance from target to node x
+        
+//        print("Building dist[x] of state graph...")
+        while !Q.isEmpty {
+            let n = Q.removeFirst() //FIFO queue
+            let dist_n = dist[n]!
+            
+            for x in adjacentNodes(with: n) {
+                if !visited.contains(x) {
+                    Q.append(x)
+                    visited.insert(x)
+                    dist[x] = dist_n + 1 //BFS ensures that dist[x] is minimum (optimal) distance
+                }
+            }
+        }
+        
+        print("\tdone building! visited.count=\(visited.count), max_dist=\(String(describing: dist.values.max()))")
+        return dist
     }
 
 }

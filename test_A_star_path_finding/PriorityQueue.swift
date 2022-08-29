@@ -90,6 +90,7 @@ struct PriorityQueue<KeyedData> where KeyedData: Comparable&Equatable {
         return root
     }
     
+    @discardableResult
     mutating func remove(of data: KeyedData) -> Bool {
         guard let index = heap_arr.firstIndex(of: data) else { return false }
         remove(at: index)

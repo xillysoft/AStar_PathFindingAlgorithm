@@ -11,8 +11,8 @@ import Foundation
  Dijkstra shortes path finding algorithm
  */
 @discardableResult
-func findPathDijkstra<Graph: IGraph>(from node0: Graph.NodePointi, to target: Graph.NodePointi, with graph: Graph) -> [Graph.NodePointi]? {
-    typealias Node = Graph.NodePointi
+func findPathDijkstra<Graph: IGraph>(from node0: Graph.Node, to target: Graph.Node, with graph: Graph) -> [Graph.Node]? {
+    typealias Node = Graph.Node
     typealias WeightType = Graph.WeightType
     
             

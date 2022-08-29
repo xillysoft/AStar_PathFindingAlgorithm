@@ -9,7 +9,7 @@ import Foundation
 import UIKit
 
 private struct KeyedNode<Graph: IGraph> : Equatable&Comparable{
-    typealias Node = Graph.NodePointi
+    typealias Node = Graph.Node
     typealias WeightType = Graph.WeightType
 
     let node: Node
@@ -32,12 +32,12 @@ private struct KeyedNode<Graph: IGraph> : Equatable&Comparable{
 /**
  A* shorted path finding algorithm
  */
-func findPathAStar<Graph: IGraph>(from node0: Graph.NodePointi,
-                                  to target: Graph.NodePointi,
-                                  with graph: Graph) -> [Graph.NodePointi]? where Graph.WeightType: Hashable {
+func findPathAStar<Graph: IGraph>(from node0: Graph.Node,
+                                  to target: Graph.Node,
+                                  with graph: Graph) -> [Graph.Node]? where Graph.WeightType: Hashable {
     
     typealias KeyedNode_ = KeyedNode<Graph>
-    typealias Node = Graph.NodePointi
+    typealias Node = Graph.Node
     typealias WeightType = Graph.WeightType
         
     var dist: [Node: WeightType] = [node0: 0]
@@ -83,19 +83,25 @@ func findPathAStar<Graph: IGraph>(from node0: Graph.NodePointi,
             let g_y = dist[n]! + graph.W(n, y)!
             if OPEN_S.contains(y) {
                 if g_y < dist[y]! {
-                    let f_y = g_y + graph.H(y, target)
+                    if let h_y = graph.H(y, target) {
+                        let f_y = g_y + h_y
+                        //instead of PriorityQueue::decrease_key() which have O(N)+O(logN) time complexity,
+                        // insert the modified node again, resulting the node processed twice but finally better performance achieved.
+                        OPEN_PQ.push(data: KeyedNode_(y, f_y))
+                    } else { //may be no path from y to target, remove y from OPEN
+                        OPEN_PQ.remove(of: KeyedNode_(y, 0))
+                        OPEN_S.remove(y)
+                    }
                     
-                    //instead of PriorityQueue::decrease_key() which have O(N)+O(logN) time complexity,
-                    // insert the modified node again, resulting the node processed twice but finally better performance achieved.
-                    OPEN_PQ.push(data: KeyedNode_(y, f_y))
-
                     dist[y] = g_y
                     parents[y] = n
                 }
             } else if !CLOSED.contains(y) {
-                let f_y = g_y + graph.H(y, target)
-                OPEN_PQ.push(data: KeyedNode(y, f_y))
-                OPEN_S.insert(y)
+                if let h_y = graph.H(y, target) {
+                    let f_y = g_y + h_y
+                    OPEN_PQ.push(data: KeyedNode(y, f_y))
+                    OPEN_S.insert(y)
+                }
                 
                 dist[y] = g_y
                 parents[y] = n
